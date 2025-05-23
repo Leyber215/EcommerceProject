@@ -1,1 +1,91 @@
+version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: orders_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  elasticsearch:
+    image: elasticsearch:8.10.2
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+
+  users-service:
+    build: ./users-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+  products-service:
+    build: ./products-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongo
+
+  orders-service:
+    build: ./orders-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mysql
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - rabbitmq
+
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - users-service
+      - products-service
+      - orders-service
+
+  vue-client:
+    build: ./vue-client
+    ports:
+      - "3000:80"
+
+  react-admin:
+    build: ./react-admin
+    ports:
+      - "3001:80"
